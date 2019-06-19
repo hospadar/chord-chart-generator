@@ -3,10 +3,21 @@ import sys
 
 #basic grid spacing
 d = 10
+#Should we scale up the whole thing?
+scalefactor = 1
 
 notes = ["A", "B♭", "B", "C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭"]
 instruments = {
-    "baritone_uke":{"strings": ["D", "G", "B", "E"], "min_frets":4}
+    #same for concert and tenor
+    "ukulele":{"strings": ["A", "E", "C", "G"], "min_frets":4},
+    "baritone_ukulele":{"strings": ["D", "G", "B", "E"], "min_frets":4},
+    "guitar":{"strings" ["E", "A", "D", "G", "B", "E"], "min_frets": 4},
+    "tenor_guitar":{"strings":["C", "G", "D", "A"]},
+    #note: not including the 5th string since most basic chords don't use it
+    #and it wouldn't render well anyways
+    "banjo":{"strings":["D","G","B","D"], "min_frets":4},
+    #typical longneck banjo tuning which allows capot on the 3rd fret to acheive standard banjo tuning
+    "longneck_banjo":{"strings": ["B", "E", "A♭", "B"], "min_frets":4}
 }
 
 
@@ -101,7 +112,7 @@ if __name__ == '__main__':
         "baseProfile":"full",
         "xmlns":"http://www.w3.org/2000/svg"
     })
-    scaleup = etree.Element("g", attrib={"transform":"scale(2)"})
+    scaleup = etree.Element("g", attrib={"transform":"scale({s})".format(s=scalefactor)})
     scaleup.append(multichart("baritone_uke",
         [[["Open", 0, 0, 0, 0]],
          [["D", 0, 2, 3, 2], ["G",0,0,0,3]],
