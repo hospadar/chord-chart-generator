@@ -1,5 +1,5 @@
 from lxml import etree
-import sys
+import sys, argparse, json
 
 #basic grid spacing
 d = 10
@@ -11,7 +11,7 @@ instruments = {
     #same for concert and tenor
     "ukulele":{"strings": ["A", "E", "C", "G"], "min_frets":4},
     "baritone_ukulele":{"strings": ["D", "G", "B", "E"], "min_frets":4},
-    "guitar":{"strings" ["E", "A", "D", "G", "B", "E"], "min_frets": 4},
+    "guitar":{"strings": ["E", "A", "D", "G", "B", "E"], "min_frets": 4},
     "tenor_guitar":{"strings":["C", "G", "D", "A"]},
     #note: not including the 5th string since most basic chords don't use it
     #and it wouldn't render well anyways
@@ -27,7 +27,7 @@ def line(startx, starty, endx, endy, weight=1, stroke="rgb(0,0,0)"):
         "y1":str(starty),
         "x2":str(endx),
         "y2":str(endy),
-        "style":"stroke-width:{w};stroke:{c}".format(w=weight, c=stroke)
+        "style":"stroke-linecap:square;stroke-width:{w};stroke:{c}".format(w=weight, c=stroke)
     })
 
 def circle(centerx, centery, radius, fill="rgb(0,0,0)"):
@@ -54,25 +54,25 @@ def neck(fretted, min_frets=4, string_labels=None, label=None):
     strings = len(fretted)
     frets = max(max(fretted), min_frets)
     lines = etree.Element("g")
-    lines.append(line(0,0, d*strings, 0, weight=3))
+    lines.append(line(0,0, d*(strings-1), 0, weight=3))
     #lines.append(line(0,0, 0, d*frets, stroke="blue"))
     #lines.append(line(d*4, 0, d*4, d*frets, stroke="blue"))
     for i in range(strings):
-        lines.append(line(i*d+.5*d, 0, i*d+.5*d, d*frets+.25*d))
+        lines.append(line(i*d, 0, i*d, d*frets+.25*d))
     for i in range(frets):
-        lines.append(line(0, i*d+d, strings*d, i*d+d))
+        lines.append(line(0, i*d+d, (strings-1)*d, i*d+d))
     for string, fret in enumerate(fretted):
         if fret != 0:
-            lines.append(circle(d*string+.5*d, fret*d-.5*d, .4*d))
+            lines.append(circle(d*string, fret*d-.5*d, .4*d))
     if string_labels != None:
         for string, string_label in enumerate(string_labels):
-            lines.append(text(string*d+.5*d, frets*d+d, string_label, height="{h}px".format(h=d*.7)))
+            lines.append(text(string*d, frets*d+d, string_label, height="{h}px".format(h=d*.7)))
 
     container = etree.Element("g")
     container.append(lines)
-    lines.attrib["transform"] = "translate(0, {y})".format(y=d*1.5)
+    lines.attrib["transform"] = "translate({x}, {y})".format(x=.5*d, y=d*1.5)
     if label != None:
-        container.append(text(0, d, label, anchor="start"))
+        container.append(text(.5*d, d, label, anchor="start"))
     return container
 
 def chord_chart(instrument, label, fretted):
@@ -106,6 +106,13 @@ def multichart(instrument, charts):
     return page
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Generate chord chart sheets")
+    parser.add_argument("-i", "--instrument", required=True, help="name of instrument", default="guitar", choices=instruments.keys())
+    parser.add_argument("-s", "--sheet", help="filename of json data for chord sheet", required=True)
+
+    options = parser.parse_args()
+
+
     root = etree.Element("svg", attrib={
 
         "version":"1.1",
@@ -113,11 +120,6 @@ if __name__ == '__main__':
         "xmlns":"http://www.w3.org/2000/svg"
     })
     scaleup = etree.Element("g", attrib={"transform":"scale({s})".format(s=scalefactor)})
-    scaleup.append(multichart("baritone_uke",
-        [[["Open", 0, 0, 0, 0]],
-         [["D", 0, 2, 3, 2], ["G",0,0,0,3]],
-         [["Em", 2,0,0,0]],
-         [["Bm", 0, 4, 3, 2]]
-        ]))
+    scaleup.append(multichart(options.instrument, json.load(open(options.sheet, encoding="utf-8"))))
     root.append(scaleup)
     sys.stdout.buffer.write(etree.tostring(root))
