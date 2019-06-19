@@ -79,6 +79,21 @@ def chord_chart(instrument, label, fretted):
         string_labels.append(notes[fretted_note])
     return neck(fretted, min_frets=instruments[instrument]["min_frets"], string_labels=string_labels, label=label)
 
+def multichart(instrument, charts):
+    page = etree.Element("g")
+    row_heights = []
+    for rownum, row in enumerate(charts):
+        max_num_frets = max(max(max(chart[1:]) for chart in row), instruments[instrument]["min_frets"])
+        row_heights.append(max_num_frets * d + 4*d)
+        for column, chart in enumerate(row):
+            parent = etree.Element("g", attrib={"transform":"translate({x}, {y})".format(
+                x=column*d*len(instruments[instrument]["strings"]) + column * d,
+                y=sum(row_heights[0:rownum])
+            )})
+            parent.append(chord_chart(instrument, chart[0], chart[1:]))
+            page.append(parent)
+    return page
+
 if __name__ == '__main__':
     root = etree.Element("svg", attrib={
         "height":"300",
@@ -87,5 +102,8 @@ if __name__ == '__main__':
         "baseProfile":"full",
         "xmlns":"http://www.w3.org/2000/svg"
     })
-    root.append(chord_chart("baritone_uke", "D", [0,2,3,2]))
+    root.append(multichart("baritone_uke",
+        [[["D", 0, 2, 3, 2], ["G",0,0,0,3]],
+         [["Em", 2,0,0,0]]
+        ]))
     sys.stdout.buffer.write(etree.tostring(root))
