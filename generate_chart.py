@@ -55,7 +55,7 @@ def neck(fretted, min_frets=4, string_labels=None, label=None):
             lines.append(circle(d*string+.5*d, fret*d-.5*d, .4*d))
     if string_labels != None:
         for string, string_label in enumerate(string_labels):
-            lines.append(text(string*d+.5*d, frets*d+d, string_label, height="{h}px".format(h=d*.8)))
+            lines.append(text(string*d+.5*d, frets*d+d, string_label, height="{h}px".format(h=d*.7)))
 
     container = etree.Element("g")
     container.append(lines)
@@ -96,14 +96,17 @@ def multichart(instrument, charts):
 
 if __name__ == '__main__':
     root = etree.Element("svg", attrib={
-        "height":"300",
-        "width":"300",
+
         "version":"1.1",
         "baseProfile":"full",
         "xmlns":"http://www.w3.org/2000/svg"
     })
-    root.append(multichart("baritone_uke",
-        [[["D", 0, 2, 3, 2], ["G",0,0,0,3]],
-         [["Em", 2,0,0,0]]
+    scaleup = etree.Element("g", attrib={"transform":"scale(2)"})
+    scaleup.append(multichart("baritone_uke",
+        [[["Open", 0, 0, 0, 0]],
+         [["D", 0, 2, 3, 2], ["G",0,0,0,3]],
+         [["Em", 2,0,0,0]],
+         [["Bm", 0, 4, 3, 2]]
         ]))
+    root.append(scaleup)
     sys.stdout.buffer.write(etree.tostring(root))
